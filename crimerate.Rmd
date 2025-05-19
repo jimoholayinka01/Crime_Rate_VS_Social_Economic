@@ -1,0 +1,375 @@
+```{r}
+install.packages("dplyr")
+```
+
+
+```{r}
+library(dplyr)
+library(Hmisc)
+library(corrplot)
+library(plotly)
+```
+
+
+```{r}
+
+crime_socio<- read.csv("data/crime_vs_socioeconomic_factors.csv")
+View(crime_socio)
+```
+```{r}
+#Checking for duplicates using the unique Parcel No
+ crime_socio%>%
+  group_by(Region) %>%
+  filter(n() > 1)
+```
+```{r}
+#Checking for NA or Null values
+any(is.na(crime_socio))
+```
+```{r}
+#Checking for outliers
+# Select only numeric columns
+numeric_cols <- sapply(crime_socio, is.numeric)
+crime_socio_numeric <- crime_socio[, numeric_cols]
+
+# Create a boxplot
+boxplot(crime_socio_numeric,
+        main = "Boxplot of Numeric Columns in Crime vs Socioeconomic Dataset",
+        las = 2)
+```
+```{r}
+#Dropping unwanted column
+crime_soc_ecn <- crime_socio
+#crime_soc_ecn <- crime_socio %>% select(-Region)
+print(crime_soc_ecn)
+```
+```{r}
+summary(crime_soc_ecn)
+```
+```{r}
+describe(crime_soc_ecn)
+
+```
+```{r}
+lowest_edu <- crime_soc_ecn %>%
+  arrange(Education_Level) %>%
+  slice_head(n = 15)
+
+ggplot(lowest_edu, aes(x = reorder(Region, Education_Level), y = Crime_Rate)) +
+  geom_bar(stat = "identity", fill = "tomato") +
+  coord_flip() +
+  labs(title = "Crime rate of 15 Regions with Lowest Education Levels",
+       x = "Region",
+       y = "Education Level") +
+  theme_minimal()
+
+```
+```{r}
+# Sort in descending order and get the top 20
+highest_edu <- crime_soc_ecn %>%
+  arrange(desc(Education_Level)) %>%
+  slice_head(n = 15)
+
+# Plot
+ggplot(highest_edu, aes(x = reorder(Region, Education_Level), y = Crime_Rate)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  coord_flip() +
+  labs(title = "Crime rate of 15 Regions with Highest Education Levels",
+       x = "Region",
+       y = "Education Level") +
+  theme_minimal()
+
+```
+```{r}
+
+# Step 1: Create groups
+top_edu <- crime_soc_ecn %>%
+  arrange(desc(Education_Level)) %>%
+  slice_head(n = 20) %>%
+  mutate(Edu_Group = "High Education")
+
+bottom_edu <- crime_soc_ecn %>%
+  arrange(Education_Level) %>%
+  slice_head(n = 20) %>%
+  mutate(Edu_Group = "Low Education")
+
+# Step 2: Combine both groups
+edu_groups <- bind_rows(top_edu, bottom_edu)
+
+# Step 3: Boxplot to compare Crime Rates
+ggplot(edu_groups, aes(x = Edu_Group, y = Crime_Rate, fill = Edu_Group)) +
+  geom_boxplot(alpha = 0.7) +
+  labs(title = "Crime Rate in Regions with High vs Low Education Levels",
+       x = "Education Level Group",
+       y = "Crime Rate") +
+  theme_minimal()
+
+
+ggplot(edu_groups, aes(x = reorder(Region, Crime_Rate), y = Crime_Rate, fill = Edu_Group)) +
+  geom_col() +
+  facet_wrap(~ Edu_Group, scales = "free") +
+  coord_flip() +
+  labs(title = "Crime Rates by Region (High vs Low Education Levels)",
+       x = "Region",
+       y = "Crime Rate") +
+  theme_minimal()
+
+
+```
+```{r}
+# Step 1: Create groups
+top_emply <- crime_soc_ecn %>%
+  arrange(desc(Employment_Rate)) %>%
+  slice_head(n = 20) %>%
+  mutate(Emp_Group = " Highest Employment Rate")
+
+bottom_emply <- crime_soc_ecn %>%
+  arrange(Employment_Rate) %>%
+  slice_head(n = 20) %>%
+  mutate(Emp_Group = "Lowest Employment Rate")
+
+# Step 2: Combine both groups
+emply_groups <- bind_rows(top_emply, bottom_emply)
+
+# Step 3: Boxplot to compare Crime Rates
+ggplot(emply_groups, aes(x = Emp_Group, y = Crime_Rate, fill = Emp_Group)) +
+  geom_boxplot(alpha = 0.7) +
+  labs(title = "Crime Rate in Regions with High vs Low Employment rate",
+       x = "Employement Level Group",
+       y = "Crime Rate") +
+  theme_minimal()
+
+ggplot(emply_groups, aes(x = reorder(Region, Crime_Rate), y = Crime_Rate, fill = Emp_Group)) +
+  geom_col() +
+  facet_wrap(~ Emp_Group, scales = "free") +
+  coord_flip() +
+  labs(title = "Crime Rates by Region (High vs Low Education Levels)",
+       x = "Region",
+       y = "Crime Rate") +
+  theme_minimal()
+
+
+```
+```{r}
+# Step 1: Create groups
+top_poverty <- crime_soc_ecn %>%
+  arrange(desc(Poverty_Rate)) %>%
+  slice_head(n = 20) %>%
+  mutate(Pov_Group = " Highest Poverty Rate")
+
+bottom_poverty <- crime_soc_ecn %>%
+  arrange(Poverty_Rate) %>%
+  slice_head(n = 20) %>%
+  mutate(Pov_Group = "Lowest Poverty Rate")
+
+# Step 2: Combine both groups
+poverty_groups <- bind_rows(top_poverty, bottom_poverty)
+
+# Step 3: Boxplot to compare Crime Rates
+ggplot(poverty_groups, aes(x = Pov_Group, y = Crime_Rate, fill = Pov_Group)) +
+  geom_boxplot(alpha = 0.7) +
+  labs(title = "Crime Rate in Regions with High vs Low Poverty Rate",
+       x = "Poverty Level Group",
+       y = "Crime Rate") +
+  theme_minimal()
+
+ggplot(poverty_groups, aes(x = reorder(Region, Crime_Rate), y = Crime_Rate, fill = Pov_Group)) +
+  geom_col() +
+  facet_wrap(~ Pov_Group, scales = "free") +
+  coord_flip() +
+  labs(title = "Crime Rates by Region (High vs Low Poverty Rate)",
+       x = "Region",
+       y = "Crime Rate") +
+  theme_minimal()
+```
+```{r}
+
+
+
+plot_ly(crime_soc_ecn, 
+        x = ~Median_Income, 
+        y = ~Poverty_Rate, 
+        z = ~Crime_Rate, 
+        type = "scatter3d", 
+        mode = "markers",
+        marker = list(size = 4, color = ~Crime_Rate, colorscale = 'Viridis')) %>%
+  layout(title = "3D Plot: Crime Rate vs Median Income and Poverty Rate")
+
+
+
+```
+```{r}
+
+
+# Step 1: Create High/Low groups based on median
+crime_data_grouped <- crime_soc_ecn %>%
+  mutate(
+    Poverty_Group = ifelse(Poverty_Rate > median(Poverty_Rate, na.rm = TRUE), "High Poverty", "Low Poverty"),
+    Income_Group = ifelse(Median_Income > median(Median_Income, na.rm = TRUE), "High Income", "Low Income")
+  )
+
+# Step 2a: Boxplot - Crime Rate vs Poverty Group
+ggplot(crime_data_grouped, aes(x = Poverty_Group, y = Crime_Rate, fill = Poverty_Group)) +
+  geom_boxplot(alpha = 0.7) +
+  labs(title = "Crime Rate by Poverty Level",
+       x = "Poverty Group",
+       y = "Crime Rate") +
+  theme_minimal()
+
+# Step 2b: Boxplot - Crime Rate vs Income Group
+ggplot(crime_data_grouped, aes(x = Income_Group, y = Crime_Rate, fill = Income_Group)) +
+  geom_boxplot(alpha = 0.7) +
+  labs(title = "Crime Rate by Income Level",
+       x = "Income Group",
+       y = "Crime Rate") +
+  theme_minimal()
+
+```
+
+
+```{r}
+plot(crime_soc_ecn$Education_Level, crime_soc_ecn$Crime_Rate,
+     main = "Crime Rate vs Education Level", xlab = "Education Level", ylab = "Crime Rate", pch = 19, col = "blue")
+
+plot(crime_soc_ecn$Employment_Rate, crime_soc_ecn$Crime_Rate,
+     main = "Crime Rate vs Employment Rate", xlab = "Employment Rate", ylab = "Crime Rate", pch = 19, col = "green")
+
+plot(crime_soc_ecn$Median_Income, crime_soc_ecn$Crime_Rate,
+     main = "Crime Rate vs Median Income", xlab = "Median Income", ylab = "Crime Rate", pch = 19, col = "purple")
+
+plot(crime_soc_ecn$Poverty_Rate, crime_soc_ecn$Crime_Rate,
+     main = "Crime Rate vs Poverty Rate", xlab = "Poverty Rate", ylab = "Crime Rate", pch = 19, col = "red")
+
+plot(crime_soc_ecn$Population_Density, crime_soc_ecn$Crime_Rate,
+     main = "Crime Rate vs Population Density", xlab = "Population Density", ylab = "Crime Rate", pch = 19, col = "orange")
+
+
+
+```
+```{r}
+ggplot(crime_soc_ecn, aes(x = Education_Level, y = Crime_Rate)) +
+  geom_point(color = "steelblue") +                     # Scatter points
+  geom_smooth(method = "lm", se = FALSE, color = "red") +  # Linear fit (regression line)
+  labs(title = "Crime Rate vs Education Level",
+       x = "Education Level",
+       y = "Crime Rate")
+```
+
+
+```{r}
+ggplot(crime_soc_ecn, aes(x = Employment_Rate, y = Crime_Rate)) +
+  geom_point(color = "steelblue") +                     # Scatter points
+  geom_smooth(method = "lm", se = FALSE, color = "red") +  # Linear fit (regression line)
+  labs(title = "Crime Rate vs Education Level",
+       x = "Education Level",
+       y = "Crime Rate")
+```
+
+
+```{r}
+ggplot(crime_soc_ecn, aes(x = Median_Income, y = Crime_Rate)) +
+  geom_point(color = "steelblue") +                     # Scatter points
+  geom_smooth(method = "lm", se = FALSE, color = "red") +  # Linear fit (regression line)
+  labs(title = "Crime Rate vs Education Level",
+       x = "Education Level",
+       y = "Crime Rate")
+```
+
+
+```{r}
+ggplot(crime_soc_ecn, aes(x = Poverty_Rate, y = Crime_Rate)) +
+  geom_point(color = "steelblue") +                     # Scatter points
+  geom_smooth(method = "lm", se = FALSE, color = "red") +  # Linear fit (regression line)
+  labs(title = "Crime Rate vs Education Level",
+       x = "Education Level",
+       y = "Crime Rate")
+
+```
+```{r}
+ggplot(crime_soc_ecn, aes(x = Population_Density, y = Crime_Rate)) +
+  geom_point(color = "green") +                     # Scatter points
+  geom_smooth(method = "lm", se = FALSE, color = "red") +  # Linear fit (regression line)
+  labs(title = "Crime Rate vs Education Level",
+       x = "Education Level",
+       y = "Crime Rate")
+```
+
+```{r}
+
+corr_matrix <- cor(crime_soc_ecn, use = "complete.obs")
+corr_matrix["Crime_Rate", ] %>% sort(decreasing = TRUE)
+
+```
+```{r}
+# Spearman Rank Correlation For nonlinear or non-normally distributed data
+cor.test(crime_soc_ecn$Education_Level, crime_soc_ecn$Crime_Rate, method = "spearman")
+```
+```{r}
+# Spearman Rank Correlation For nonlinear or non-normally distributed data
+cor.test(crime_soc_ecn$Employment_Rate, crime_soc_ecn$Crime_Rate, method = "spearman")
+```
+
+
+```{r}
+# Spearman Rank Correlation For nonlinear or non-normally distributed data
+cor.test(crime_soc_ecn$Median_Income, crime_soc_ecn$Crime_Rate, method = "spearman")
+```
+
+
+```{r}
+# Spearman Rank Correlation For nonlinear or non-normally distributed data
+cor.test(crime_soc_ecn$Poverty_Rate, crime_soc_ecn$Crime_Rate, method = "spearman")
+```
+
+
+```{r}
+# Spearman Rank Correlation For nonlinear or non-normally distributed data
+cor.test(crime_soc_ecn$Population_Density, crime_soc_ecn$Crime_Rate, method = "spearman")
+```
+
+
+```{r}
+corrplot(corr_matrix, method = "color", type = "upper", tl.cex = 0.8, tl.col = "black")
+
+
+```
+```{r}
+
+hist(crime_soc_ecn$Crime_Rate, main = "Crime Rate Distribution", col = "skyblue", breaks = 20)
+abline(v=MEAN, col="red",lwd=6) 
+text("Mean",x=MEAN,y=100, col="blue")
+
+hist(crime_soc_ecn$Education_Level, main = "Education level Distribution", col = "skyblue", breaks = 20)
+hist(crime_soc_ecn$Employment_Rate, main = "Employment rate Distribution", col = "skyblue", breaks = 20)
+hist(crime_soc_ecn$Median_Income, main = "Median income Distribution", col = "skyblue", breaks = 20)
+hist(crime_soc_ecn$Poverty_Rate, main = "Poverty rate Distribution", col = "skyblue", breaks = 20)
+hist(crime_soc_ecn$Population_Density, main = "Population density Distribution", col = "skyblue", breaks = 20)
+
+
+
+```
+```{r}
+#Density plot to check normality visually
+ggdensity(crime_soc_ecn$Education_Level,
+          main = "density",
+          xlab = "points")
+
+```
+Since the data is not normal (e.g., it is biased, or homogeneous) requires a different set of tests called non-parametric tests
+```{r}
+#Shapiro-Wilk test:
+# Null hypothesis: the data are normally distributed
+# Alternative hypothesis: the data are not normally distributed
+shapiro.test(crime_soc_ecn$Crime_Rate)
+shapiro.test(crime_soc_ecn$Education_Level)
+shapiro.test(crime_soc_ecn$Employment_Rate)
+shapiro.test(crime_soc_ecn$Median_Income)
+shapiro.test(crime_soc_ecn$Poverty_Rate)
+shapiro.test(crime_soc_ecn$Population_Density)
+#From the output, the p-value > 0.05 implying that the distribution of the data are not significantly
+#different from normal distribution. In other words, we can assume the normality.
+```
+```{r}
+
+```
+Write code to examine region with low education level and compare with crime rate
