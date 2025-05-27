@@ -3,13 +3,24 @@ install.packages("dplyr")
 install.packages("Hmisc")
 install.packages("corrplot")
 install.packages("plotly")
+install.packages("ggpubr")
+install.packages("ggplot2")
+install.packages("patchwork")
+install.packages("RColorBrewer")
+install.packages("reshape2")
+
 library(dplyr)
 library(Hmisc)
 library(corrplot)
 library(plotly)
+library(ggpubr)
+library(ggplot2)
+library(patchwork)
+library(reshape2)
+library(RColorBrewer)
 
 crime_socio<- read.csv("data/crime_vs_socioeconomic_factors.csv")
-print(crime_socio)
+View(crime_socio)
 
 #Checking for duplicates using the Region
 crime_socio%>%
@@ -30,11 +41,13 @@ boxplot(crime_socio_numeric,
         las = 2)
 
 #Data structure and type check
+crime_soc_ecn <- crime_socio
 str(crime_soc_ecn)
 
 summary(crime_soc_ecn)
 
 describe(crime_soc_ecn)
+
 
 lowest_edu <- crime_soc_ecn %>%
   arrange(Education_Level) %>%
@@ -83,6 +96,7 @@ ggplot(lowest_emp, aes(x = reorder(Region, Poverty_Rate), y = Crime_Rate)) +
        x = "Region",
        y = "Poverty Rate") +
   theme_minimal()
+
 
 # Sort in descending order and get the top 20
 highest_edu <- crime_soc_ecn %>%
@@ -139,7 +153,6 @@ ggplot(highest_emp, aes(x = reorder(Region, Poverty_Rate), y = Crime_Rate)) +
        y = "Poverty Rate") +
   theme_minimal()
 
-toot
 
 # Step 1: Create groups
 top_edu <- crime_soc_ecn %>%
@@ -173,7 +186,6 @@ ggplot(edu_groups, aes(x = reorder(Region, Crime_Rate), y = Crime_Rate, fill = E
        y = "Crime Rate") +
   theme_minimal()
 
-
 # Step 1: Create groups
 top_emply <- crime_soc_ecn %>%
   arrange(desc(Employment_Rate)) %>%
@@ -204,7 +216,6 @@ ggplot(emply_groups, aes(x = reorder(Region, Crime_Rate), y = Crime_Rate, fill =
        x = "Region",
        y = "Crime Rate") +
   theme_minimal()
-
 
 # Step 1: Create groups
 top_poverty <- crime_soc_ecn %>%
@@ -237,6 +248,9 @@ ggplot(poverty_groups, aes(x = reorder(Region, Crime_Rate), y = Crime_Rate, fill
        y = "Crime Rate") +
   theme_minimal()
 
+
+
+
 plot_ly(crime_soc_ecn, 
         x = ~Median_Income, 
         y = ~Poverty_Rate, 
@@ -245,7 +259,6 @@ plot_ly(crime_soc_ecn,
         mode = "markers",
         marker = list(size = 4, color = ~Crime_Rate, colorscale = 'Viridis')) %>%
   layout(title = "3D Plot: Crime Rate vs Median Income and Poverty Rate")
-
 # Step 1: Create High/Low groups based on median
 crime_data_grouped <- crime_soc_ecn %>%
   mutate(
@@ -313,7 +326,6 @@ ggplot(crime_soc_ecn, aes(x = Poverty_Rate, y = Crime_Rate)) +
        x = "Poverty Rate",
        y = "Crime Rate")
 
-
 ggplot(crime_soc_ecn, aes(x = Population_Density, y = Crime_Rate)) +
   geom_point(color = "green") +                     # Scatter points
   geom_smooth(method = "lm", se = FALSE, color = "red") +  # Linear fit (regression line)
@@ -325,15 +337,6 @@ ggplot(crime_soc_ecn, aes(x = Population_Density, y = Crime_Rate)) +
 corr_matrix <- cor(crime_socio_numeric, use = "complete.obs")
 corr_matrix["Crime_Rate", ] %>% sort(decreasing = TRUE)
 corrplot(corr_matrix, method = "color", type = "upper", tl.cex = 0.8, tl.col = "black")
-
-
-
-ggplot(crime_soc_ecn, aes(x = EduGroup, y = Crime_Rate, fill = EduGroup)) +
-  geom_boxplot() +
-  labs(title = "Crime Rate Across Education Level Groups",
-       x = "Education Level Group",
-       y = "Crime Rate") +
-  theme_minimal()
 
 
 # Spearman Rank Correlation For nonlinear or non-normally distributed data
@@ -354,7 +357,6 @@ cor.test(crime_soc_ecn$Population_Density, crime_soc_ecn$Crime_Rate, method = "s
 corrplot(corr_matrix, method = "color", type = "upper", tl.cex = 0.8, tl.col = "black")
 
 
-
 hist(crime_soc_ecn$Crime_Rate, main = "Crime Rate Distribution", col = "skyblue", breaks = 20)
 
 
@@ -363,7 +365,6 @@ hist(crime_soc_ecn$Employment_Rate, main = "Employment rate Distribution", col =
 hist(crime_soc_ecn$Median_Income, main = "Median income Distribution", col = "skyblue", breaks = 20)
 hist(crime_soc_ecn$Poverty_Rate, main = "Poverty rate Distribution", col = "skyblue", breaks = 20)
 hist(crime_soc_ecn$Population_Density, main = "Population density Distribution", col = "skyblue", breaks = 20)
-
 
 
 #Density plot to check normality visually
@@ -391,10 +392,6 @@ ggdensity(crime_soc_ecn$Population_Density,
           main = "Normality visuals for Education Level",
           xlab = "points")
 
-Since the data is not normal (e.g., it is biased, or homogeneous) requires a different set of tests called non-parametric tests
-
-
-
 # Function to group a numeric variable into 3 levels: Low, Medium, High
 group_variable <- function(var) {
   cut(var, breaks = quantile(var, probs = c(0, 1/3, 2/3, 1), na.rm = TRUE),
@@ -420,7 +417,7 @@ kw_poverty
 kw_employ
 
 
-library(reshape2)
+
 subset_df <- crime_soc_ecn[, c("Crime_Rate", "Median_Income", "Poverty_Rate")]
 melted_df <- melt(subset_df)
 
@@ -431,7 +428,6 @@ ggplot(melted_df, aes(x = variable, y = value, fill = variable)) +
   theme_minimal()
 
 
-library(dplyr)
 
 top_edu <- crime_soc_ecn %>%
   arrange(desc(Education_Level)) %>%
@@ -465,10 +461,6 @@ ggplot(crime_soc_ecn, aes(x = EduGroup, y = Crime_Rate, fill = EduGroup)) +
        y = "Crime Rate") +
   theme_minimal()
 
-
-library(ggplot2)
-library(patchwork)  # for combining plots
-
 p1 <- ggplot(crime_soc_ecn, aes(x = EduGroup, y = Crime_Rate, fill = EduGroup)) +
   geom_boxplot() +
   labs(title = "Crime Rate by Education Group", x = "Education Group", y = "Crime Rate") +
@@ -491,11 +483,6 @@ p4 <- ggplot(crime_soc_ecn, aes(x = EmploymentGroup, y = Crime_Rate, fill = Empl
 
 # Combine all 4
 (p1 | p2) / (p3 | p4)
-
-
-# Load required packages
-library(ggplot2)
-library(patchwork)  # For combining plots
 
 # Optional: Set a consistent theme
 custom_theme <- theme_minimal(base_size = 12) +
@@ -534,7 +521,6 @@ combined_plot <- (p1 | p2) / (p3 | p4)
 # Show combined plot
 print(combined_plot)
 
-
 ggplot(crime_soc_ecn, aes(x = Poverty_Rate, y = Crime_Rate)) +
   geom_point(color = "#FF7F0E", alpha = 0.5) +
   geom_smooth(method = "loess", color = "black") +
@@ -545,9 +531,6 @@ ggplot(crime_soc_ecn, aes(x = Poverty_Rate, y = Crime_Rate)) +
   ) +
   theme_minimal(base_size = 14)
 
-
-library(reshape2)
-library(RColorBrewer)
 
 # Spearman correlation matrix
 num_data <- crime_soc_ecn[, sapply(crime_soc_ecn, is.numeric)]
@@ -562,8 +545,6 @@ ggplot(melted_corr, aes(Var1, Var2, fill = value)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 
-library(dplyr)
-
 crime_soc_ecn %>%
   group_by(IncomeGroup) %>%
   summarise(AvgCrime = mean(Crime_Rate)) %>%
@@ -576,7 +557,6 @@ crime_soc_ecn %>%
   ) +
   scale_fill_brewer(palette = "Pastel2") +
   theme_minimal(base_size = 14)
-
 
 ggplot(crime_soc_ecn, aes(x = EduGroup, y = Crime_Rate, fill = EduGroup)) +
   geom_boxplot() +
@@ -617,5 +597,4 @@ ggplot(crime_soc_ecn, aes(x = EmploymentGroup, y = Crime_Rate, fill = Employment
     y = "Crime Rate"
   ) +
   theme_minimal(base_size = 14)
-
 
